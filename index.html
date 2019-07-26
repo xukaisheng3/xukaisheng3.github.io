@@ -264,6 +264,163 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://xukaisheng3.github.io/2019/07/26/spring-AOP的静态代理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="keason.xu">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="https://avatars2.githubusercontent.com/u/16846607?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="中年码农博客-徐凯生">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/07/26/spring-AOP的静态代理/" itemprop="url">spring AOP的静态代理</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-07-26T16:42:29+08:00">
+                2019-07-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>众所周知，一旦提到AOP，大家第一反应就是JDK动态代理和CGLib代理，没错，这两种代理都是通过运行时内存临时生成代理类（Proxy.newProxyInstance+InvocationHandler或者Enhancer+MethodInterceptor实现）。故而又称作运行时增强–动态代理。世间万物都不是绝对的，既然有动态代理，那么，是否有想过：是不是存在静态代理呢？</p>
+<h2 id="LTW（load-time-waeving）"><a href="#LTW（load-time-waeving）" class="headerlink" title="LTW（load time waeving）"></a>LTW（load time waeving）</h2><p>其实，除了运行时织入切面的方式外，我们还有一种途径进行切面织入，它可以在类加载期通过字节码转换，进而将目标织入切入点（目标类），这种方式就是LTW，即静态代理（静待代理也被称作编译时增强，后面会有相关代码样例）。<br>LTW在Java5的时候就被引入了，想要了解其原理，先要了解一个知识——Instrument包。</p>
+<h2 id="java-lang-instrument包的工作原理"><a href="#java-lang-instrument包的工作原理" class="headerlink" title="java.lang.instrument包的工作原理"></a>java.lang.instrument包的工作原理</h2><p>JDK5.0时引入了此包，目的就是为了能对JVM底层组建进行访问。如何访问？其实说来个人觉得还挺麻烦的，就是需要通过JVM的启动参数-javaagent在启动时获取JVM内部组件的引用。参数格式如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo -javaagent:[=options]</span><br><span class="line">此处先卖个关子，不急着解释参数中的jarpath和options，后面的运行代码及结果的样例中会进行针对使用红框标记说明，效果更好。</span><br></pre></td></tr></table></figure>
+
+<p>那么，它和AOP有和关系呢？</p>
+<p>因为它在JVM启动时会装配并应用ClassTransformer，对类字节码进行转换，进而实现AOP的功能。</p>
+<p>下面说一下instrument包下的两个重要接口：</p>
+<p>ClassFileTransformer</p>
+<p>它是Class文件转换器接口，这个接口有且仅有一个方法，如图所示：<br>注意：transform方法会有一个返回值，类型是byte[]，表示转换后的字节码，但是如果返回为空，则表示不进行节码转换处理，千万不要当作是把原先类的字节码清空。</p>
+<p>Instrumentation</p>
+<p>这个接口提供了很多方法，我们主要注意一个方法即可，即：addTransformer方法，它的作用就是把一些ClassFileTransformer注册到JVM内部，接口如图所示：</p>
+<p>具体工作原理是这样的：</p>
+<p>① ClassFileTransformer实例注册到JVM之后，JVM在加载Class文件时，就会先调用ClassFileTransformer的transform()方法进行字节码转换；</p>
+<p>② 若注册了多个ClassFileTransformer实例，则按照注册时的顺序进行一次调用。</p>
+<p>这样也就实现了从JVM层面截获字节码，进而织入操作者自己希望添加的逻辑，即实现AOP效果。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://xukaisheng3.github.io/2019/07/26/而立之年/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -573,7 +730,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">3</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -584,7 +741,7 @@
               
               <div class="site-state-item site-state-categories">
                 
-                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-count">2</span>
                   <span class="site-state-item-name">分类</span>
                 
               </div>
@@ -595,7 +752,7 @@
               
               <div class="site-state-item site-state-tags">
                 
-                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-count">4</span>
                   <span class="site-state-item-name">标签</span>
                 
               </div>
