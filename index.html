@@ -376,9 +376,13 @@
 <h4 id="2-1-FIFO–（First-inFirst-out）"><a href="#2-1-FIFO–（First-inFirst-out）" class="headerlink" title="2.1 FIFO–（First inFirst out）"></a>2.1 FIFO–（First inFirst out）</h4><p>最先进入的数据，最先被淘汰。一个很简单的算法。只要使用队列数据结构即可实现。那么FIFO淘汰算法基于的思想是”最近刚访问的，将来访问的可能性比较大”。</p>
 <h6 id="特别介绍：2Q-Two-Queues"><a href="#特别介绍：2Q-Two-Queues" class="headerlink" title="特别介绍：2Q(Two Queues)"></a>特别介绍：2Q(Two Queues)</h6><hr>
 <p>同样也是为了解决LRU算法的缓存污染问题。类似于LRU-2，不同点在于2Q将LRU-2算法中的访问历史队列改为一个FIFO缓存队列，即：2Q算法有两个缓存队列，一个是FIFO队列，一个是LRU队列。<br>当数据第一次访问时，2Q算法将数据缓存在FIFO队列里面，当数据第二次被访问时，则将数据从FIFO队列移到LRU队列里面，两个队列各自按照自己的方法淘汰数据。详细实现如下：</p>
-<p><img src="https://img-blog.csdn.net/20170616195939678?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY29uc3RhbnRfenloMTg4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt></p>
+<p><img src="https://www.rainsunyy.com/wx/storage/fetch/lyqqssaxagncfd3b0pwr.png" alt></p>
 <p>新访问的数据插入到FIFO队列；<br>如果数据在FIFO队列中一直没有被再次访问，则最终按照FIFO规则淘汰；<br>如果数据在FIFO队列中被再次访问，则将数据移到LRU队列头部；<br>如果数据在LRU队列再次被访问，则将数据移到LRU队列头部；<br>LRU队列淘汰末尾的数据。<br>注：上图中FIFO队列比LRU队列短，但并不代表这是算法要求，实际应用中两者比例没有硬性规定。</p>
-<h4 id="2-2-LRU–（Least-Recently-User）"><a href="#2-2-LRU–（Least-Recently-User）" class="headerlink" title="2.2 LRU–（Least Recently User）"></a>2.2 LRU–（Least Recently User）</h4><p>根据数据的历史访问记录来进行淘汰数据，其核心思想是“如果数据最近被访问过，那么将来被访问的几率也更高”。<br>1.LRU<br>最常见的实现是使用一个链表保存缓存数据，详细算法实现如下：<br><img src="https://img-blog.csdn.net/20170616195849503?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY29uc3RhbnRfenloMTg4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt><br>新数据插入到链表头部；<br>每当缓存命中（即缓存数据被访问），则将数据移到链表头部；<br>当链表满的时候，将链表尾部的数据丢弃。<br>当存在热点数据时，LRU的效率很好，但偶发性的、周期性的批量操作会导致LRU命中率急剧下降，缓存污染情况比较严重。<br>2.LRU-K(LeastRecently Used K)<br>相比LRU，LRU-K需要多维护一个队列，用于记录所有缓存数据被访问的历史。只有当数据的访问次数达到K次的时候，才将数据放入缓存。当需要淘汰数据时，LRU-K会淘汰第K次访问时间距当前时间最大的数据。详细实现如下：<br><img src="https://img-blog.csdn.net/20170616195912600?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY29uc3RhbnRfenloMTg4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt><br>数据第一次被访问，加入到访问历史列表；</p>
+<h4 id="2-2-LRU–（Least-Recently-User）"><a href="#2-2-LRU–（Least-Recently-User）" class="headerlink" title="2.2 LRU–（Least Recently User）"></a>2.2 LRU–（Least Recently User）</h4><p>根据数据的历史访问记录来进行淘汰数据，其核心思想是“如果数据最近被访问过，那么将来被访问的几率也更高”。<br>1.LRU<br>最常见的实现是使用一个链表保存缓存数据，详细算法实现如下：</p>
+<p><img src="https://www.rainsunyy.com/wx/storage/fetch/tushci2yrp0s0i1i0ixt.png" alt></p>
+<p>新数据插入到链表头部；<br>每当缓存命中（即缓存数据被访问），则将数据移到链表头部；<br>当链表满的时候，将链表尾部的数据丢弃。<br>当存在热点数据时，LRU的效率很好，但偶发性的、周期性的批量操作会导致LRU命中率急剧下降，缓存污染情况比较严重。<br>2.LRU-K(LeastRecently Used K)<br>相比LRU，LRU-K需要多维护一个队列，用于记录所有缓存数据被访问的历史。只有当数据的访问次数达到K次的时候，才将数据放入缓存。当需要淘汰数据时，LRU-K会淘汰第K次访问时间距当前时间最大的数据。详细实现如下：</p>
+<p><img src="https://www.rainsunyy.com/wx/storage/fetch/w8d7h8b70nwaatik6u5r.png" alt></p>
+<p>数据第一次被访问，加入到访问历史列表；</p>
 <p>如果数据在访问历史列表里后没有达到K次访问，则按照一定规则（FIFO，LRU）淘汰；</p>
 <p>当访问历史队列中的数据访问次数达到K次后，将数据索引从历史队列删除，将数据移到缓存队列中，并缓存此数据，缓存队列重新按照时间排序；</p>
 <p>缓存数据队列中被再次访问后，重新排序；</p>
@@ -388,7 +392,7 @@
 <ol>
 <li>LFU<br>LFU的每个数据块都有一个引用计数，所有数据块按照引用计数排序，具有相同引用计数的数据块则按照时间排序。<br>具体实现如下：</li>
 </ol>
-<p><img src="https://img-blog.csdn.net/20170616195743146?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY29uc3RhbnRfenloMTg4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt><br><img src="https://img-blog.csdn.net/20170616200233242?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvY29uc3RhbnRfenloMTg4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt></p>
+<p><img src="https://www.rainsunyy.com/wx/storage/fetch/t9s5nszhwjlv530lf9jq.png" alt><br><img src="https://www.rainsunyy.com/wx/storage/fetch/0ommwtqc3yhje6l4jziy.png" alt></p>
 <p>1.假设我们的lfu最大的存储空间控制为5个，此时访问D,D现在的访问频率计数是26;<br>2.访问D后,D的频率+1,也就是27了。 此时需要调整缓存池数据需要重新排序,D和C交换;<br>3.访问B,B的频率+1,由于A的频率仍然比B大,所以不需要调整;<br>4.当新数据F插入缓存池之前,由于已经空间满了，需要干掉一个！ 因为E的频率最低,故淘汰E,将F插入缓存池,缓存池重新排序,F放到队尾.<br>新加入数据插入到队列尾部（因为引用计数为1）<br>队列中的数据被访问后，引用计数增加，队列重新排序<br>当需要淘汰数据时，将已经排序的列表最后的数据块删除</p>
 <p>基本释义就这么多，下一篇我们将撸代码分别实现这三种算法，code every！</p>
 
