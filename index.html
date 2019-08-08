@@ -264,6 +264,179 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://xukaisheng3.github.io/2019/08/08/SPI自我梳理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="keason.xu">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="https://avatars2.githubusercontent.com/u/16846607?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="中年码农博客-徐凯生">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/08/08/SPI自我梳理/" itemprop="url">SPI自我梳理</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-08T16:15:08+08:00">
+                2019-08-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="理解SPI"><a href="#理解SPI" class="headerlink" title="理解SPI"></a><strong>理解SPI</strong></h3><hr>
+<p>SPI全称Service provider Interface，是java提供的一套被用来第三方实现或者扩展的API，它可以启动框架扩展和替换组件。</p>
+<p>整体机制如下图所示：</p>
+<p><img src="https://www.rainsunyy.com/wx/storage/fetch/qn6w96lni3e5v7lzk977.webp" alt="cmd-markdown-logo"></p>
+<p>Java SPI遵循“基于接口编程+策略模式+配置文件”组合实现的动态加载机制。<br>系统设计的各个抽象，通常有不同的实现方式。在面向对象的实际里，一般推荐模块之间基于接口编程，模块之间不对实现类进行硬编码。一旦代码涉及到具体实现类，就违反了可拔插的原则，如果需要实现一个实现方式，就得修改代码。为了实现在模块装配的时候能不在程序里动态指明，这就需要一种服务发现机制。<br>Java SPI就是提供这样的一个机制：为某个接口寻找服务实现的机制。有点类似IOC的思想，就是将装配的控制权移到程序之外，在模块化设计中这个机制尤其重要。所以SPI的核心思想就是解耦。</p>
+<h4 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a><strong>使用场景</strong></h4><p>概括的说，调用者根据实际情况需要，启动、扩展、或者替换框架的实现框架。<br>例子：</p>
+<ul>
+<li><p>数据库驱动加载接口实现类的加载</p>
+<p>JDBC加载不同类型数据库的驱动</p>
+</li>
+<li><p>日志门面接口实现类加载</p>
+<p>SLF4J加载不同提供商的日志实现类</p>
+</li>
+<li><p>Spring</p>
+<p>Spring中大量使用了SPI,比如：对servlet3.0规范对ServletContainerInitializer的实现、自动类型转换Type Conversion SPI(Converter SPI、Formatter SPI)等</p>
+</li>
+<li><p>Dubbo</p>
+<p>Dubbo中也大量使用SPI的方式实现框架的扩展, 不过它对Java提供的原生SPI做了封装，允许用户扩展实现Filter接口</p>
+</li>
+<li><p>springboot</p>
+<p>spring中仔细想想，也有类SPI的思想，SpringFactoriesLoader类的主要作用是通过类路径下的META-INF/spring.factories文件获取工厂类接口的实现类，初始化并保存在缓存中，以供Springboot启动过程中各个阶段的调用。</p>
+</li>
+</ul>
+<h4 id="使用介绍"><a href="#使用介绍" class="headerlink" title="使用介绍"></a><strong>使用介绍</strong></h4><p>要使用Java SPI，需要遵循如下约定：</p>
+<ol>
+<li>当服务提供者提供了接口的一种具体实现后，在jar包的META-INF/services目录下创建一个以“接口全限定名”为命名的文件，内容为实现类的全限定名；</li>
+<li>接口实现类所在的jar包放在主程序的classpath中；</li>
+<li>主程序通过java.util.ServiceLoder动态装载实现模块，它通过扫描META-INF/services目录下的配置文件找到实现类的全限定名，把类加载到JVM；</li>
+<li>SPI的实现类必须携带一个不带参数的构造方法；</li>
+</ol>
+<h4 id="实例代码"><a href="#实例代码" class="headerlink" title="实例代码"></a><strong>实例代码</strong></h4><p>步骤1、定义一组接口 (假设是org.foo.demo.IShout)，并写出接口的一个或多个实现，(假设是org.foo.demo.animal.Dog、org.foo.demo.animal.Cat)。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">IShout</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">shout</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Cat</span> <span class="keyword">implements</span> <span class="title">IShout</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">shout</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"miao miao"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Dog</span> <span class="keyword">implements</span> <span class="title">IShout</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">shout</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"wang wang"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>步骤2、在 src/main/resources/ 下建立 /META-INF/services 目录， 新增一个以接口命名的文件 (org.foo.demo.IShout文件)，内容是要应用的实现类（这里是org.foo.demo.animal.Dog和org.foo.demo.animal.Cat，每行一个类）。<br>文件位置</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">- src</span><br><span class="line">    -main</span><br><span class="line">        -resources</span><br><span class="line">            - META-INF</span><br><span class="line">                - services</span><br><span class="line">                    - org.foo.demo.IShout</span><br><span class="line"></span><br><span class="line">文件内容</span><br><span class="line">org.foo.demo.animal.Dog</span><br><span class="line">org.foo.demo.animal.Cat</span><br></pre></td></tr></table></figure>
+
+<p>步骤3、使用 ServiceLoader 来加载配置文件中指定的实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SPIMain</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        ServiceLoader&lt;IShout&gt; shouts = ServiceLoader.load(IShout.class);</span><br><span class="line">        <span class="keyword">for</span> (IShout s : shouts) &#123;</span><br><span class="line">            s.shout();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">``` </span><br><span class="line">代码输出：</span><br><span class="line">```java</span><br><span class="line">wang wang</span><br><span class="line">miao miao</span><br></pre></td></tr></table></figure>
+
+<h4 id="原理解析"><a href="#原理解析" class="headerlink" title="原理解析"></a><strong>原理解析</strong></h4><p>万事看源码，到了3-5年开发，就得逼自己看源码，也不行瞎看，带着疑问为什么的去看，如果是你，会怎么实现，你实现解决了什么问题。<br>首先看ServiceLoader类的签名类的成员变量：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">ServiceLoader</span>&lt;<span class="title">S</span>&gt; <span class="keyword">implements</span> <span class="title">Iterable</span>&lt;<span class="title">S</span>&gt;</span>&#123;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String PREFIX = <span class="string">"META-INF/services/"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 代表被加载的类或者接口</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Class&lt;S&gt; service;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 用于定位，加载和实例化providers的类加载器</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ClassLoader loader;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建ServiceLoader时采用的访问控制上下文</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> AccessControlContext acc;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 缓存providers，按实例化的顺序排列</span></span><br><span class="line">    <span class="keyword">private</span> LinkedHashMap&lt;String,S&gt; providers = <span class="keyword">new</span> LinkedHashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 懒查找迭代器</span></span><br><span class="line">    <span class="keyword">private</span> LazyIterator lookupIterator;</span><br><span class="line">  </span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>参考具体ServiceLoader具体源码，代码量不多，加上注释一共587行，梳理了一下，实现的流程如下：</p>
+<ol>
+<li><p>应用程序调用ServiceLoader.load方法<br>ServiceLoader.load方法内先创建一个新的ServiceLoader，并实例化该类中的成员变量，包括：</p>
+<p>loader(ClassLoader类型，类加载器)<br>acc(AccessControlContext类型，访问控制器)<br>providers(LinkedHashMap&lt;String,S&gt;类型，用于缓存加载成功的类)<br>lookupIterator(实现迭代器功能)</p>
+</li>
+<li><p>应用程序通过迭代器接口获取对象实例<br>ServiceLoader先判断成员变量providers对象中(LinkedHashMap&lt;String,S&gt;类型)是否有缓存实例对象，如果有缓存，直接返回。如果没有缓存，执行类的装载，实现如下：<br>(1) 读取META-INF/services/下的配置文件，获得所有能被实例化的类的名称，值得注意的是，ServiceLoader可以跨越jar包获取META-INF下的配置文件，具体加载配置的实现代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">            String fullName = PREFIX + service.getName();</span><br><span class="line">            <span class="keyword">if</span> (loader == <span class="keyword">null</span>)</span><br><span class="line">                configs = ClassLoader.getSystemResources(fullName);</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                configs = loader.getResources(fullName);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException x) &#123;</span><br><span class="line">            fail(service, <span class="string">"Error locating configuration files"</span>, x);</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<p>(2) 通过反射方法Class.forName()加载类对象，并用instance()方法将类实例化。<br>(3) 把实例化后的类缓存到providers对象中，(LinkedHashMap&lt;String,S&gt;类型）<br>然后返回实例对象。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h4><p><strong>优点：</strong><br>使用Java SPI机制的优势是实现解耦，使得第三方服务模块的装配控制的逻辑与调用者的业务代码分离，而不是耦合在一起。应用程序可以根据实际业务情况启用框架扩展或替换框架组件。<br><strong>缺点：</strong><br>虽然ServiceLoader也算是使用的延迟加载，但是基本只能通过遍历全部获取，也就是接口的实现类全部加载并实例化一遍。如果你并不想用某些实现类，它也被加载并实例化了，这就造成了浪费。获取某个实现类的方式不够灵活，只能通过Iterator形式获取，不能根据某个参数来获取对应的实现类。<br>多个并发多线程使用ServiceLoader类的实例是不安全的。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://xukaisheng3.github.io/2019/08/07/记住今天，迈出第一步-51buys/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1327,7 +1500,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-count">8</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
